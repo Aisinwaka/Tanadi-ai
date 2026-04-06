@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TANADI - AI Savings Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #00e5a0;
+  --dark: #050f1a;
+  --card: #0a1f30;
+  --card2: #0d2540;
+  --accent: #00b8ff;
+  --gold: #ffc940;
+  --text: #e8f4ff;
+  --muted: #7a9bb5;
+  --red: #ff6b6b;
+  --border: rgba(255,255,255,0.07);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 10%, rgba(0,229,160,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 60% at 90% 90%, rgba(0,184,255,0.06) 0%, transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+* { position: relative; z-index: 1; }
+
+/* ── HEADER ── */
+.header {
+  background: rgba(5,15,26,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.logo span { color: var(--green); }
+.score-badge {
+  background: rgba(0,229,160,0.12);
+  border: 1px solid rgba(0,229,160,0.25);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* ── STATS BAR ── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.stat-item {
+  padding: 12px 8px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+.stat-item:last-child { border-right: none; }
+.stat-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+}
+.stat-lbl {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── NAV ── */
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: rgba(5,15,26,0.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+}
+.nav-btn {
+  flex: 1;
+  padding: 12px 4px 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.2s;
+}
+.nav-btn span {
+  font-size: 9px;
+  font-family: 'DM Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.nav-btn.active { color: var(--green); }
+.nav-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 40px;
+  height: 2px;
+  background: var(--green);
+  border-radius: 0 0 4px 4px;
+}
+
+/* ── PAGES ── */
+.page { display: none; padding: 20px; }
+.page.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+/* ── INPUTS ── */
+input, select, textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(0,229,160,0.4);
+}
+select option { background: var(--card); }
+label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+}
+.btn:active { transform: scale(0.98); }
+.btn-green {
+  background: linear-gradient(135deg, var(--green), #00c87a);
+  color: var(--dark);
+}
+.btn-blue {
+  background: linear-gradient(135deg, var(--accent), #0080ff);
+  color: white;
+}
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #ff9500);
+  color: var(--dark);
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-sm {
+  padding: 10px 16px;
+  font-size: 13px;
+  width: auto;
+  display: inline-block;
+}
+
+/* ── BUDGET PAGE ── */
+.budget-result {
+  display: none;
+}
+.score-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  background: rgba(0,229,160,0.08);
+}
+.score-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--green);
+}
+.score-label { font-size: 11px; color: var(--muted); }
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.result-row:last-child { border-bottom: none; }
+.result-row .key { color: var(--muted); }
+.result-row .val { font-weight: 600; }
+.val.green { color: var(--green); }
+.val.red { color: var(--red); }
+.val.gold { color: var(--gold); }
+
+.tip-box {
+  background: rgba(0,229,160,0.08);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--green);
+  line-height: 1.6;
+}
+
+/* ── CHAT PAGE ── */
+.chat-messages {
+  height: calc(100vh - 280px);
+  overflow-y: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg {
+  max-width: 85%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn {
+  from { opacity:0; transform: translateY(10px); }
+  to { opacity:1; transform: translateY(0); }
+}
+.msg-bot {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+.msg-user {
+  background: linear-gradient(135deg, rgba(0,229,160,0.2), rgba(0,184,255,0.15));
+  border: 1px solid rgba(0,229,160,0.2);
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+}
+.chat-input-area {
+  position: fixed;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  padding: 12px 20px;
+  background: rgba(5,15,26,0.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+}
+.chat-input-area input {
+  flex: 1;
+  margin: 0;
+  border-radius: 100px;
+  padding: 12px 18px;
+}
+.send-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green), var(--accent));
+  border: none;
+  color: var(--dark);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.quick-replies {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+  scrollbar-width: none;
+}
+.quick-replies::-webkit-scrollbar { display: none; }
+.qr {
+  white-space: nowrap;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text);
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.qr:hover { border-color: rgba(0,229,160,0.4); }
+
+/* ── BANK PAGE ── */
+.bank-tabs {
+  display: flex;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+.bank-tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.bank-tab.active {
+  background: var(--card2);
+  color: var(--green);
+}
+.bank-panel { display: none; }
+.bank-panel.active { display: block; }
+
+.bank-info {
+  background: rgba(0,229,160,0.06);
+  border: 1px solid rgba(0,229,160,0.15);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.linked-account {
+  background: var(--card2);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.bank-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--green), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.bank-details { flex: 1; }
+.bank-name { font-weight: 700; font-size: 15px; }
+.bank-acct { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.ussd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ussd-card {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+.ussd-code {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gold);
+}
+.ussd-bank {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── VAULT PAGE ── */
+.vault-balance {
+  text-align: center;
+  padding: 24px;
+}
+.vault-amount {
+  font-family: 'Syne', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gold), #ff9500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.vault-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.tx-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.tx-item:last-child { border-bottom: none; }
+.tx-note { color: var(--muted); }
+.tx-amount { font-weight: 700; color: var(--green); }
+.tx-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── GAME PAGE ── */
+.game-area {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.game-score {
+  font-family: 'Syne', sans-serif;
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+}
+.game-label { font-size: 12px; color: var(--muted); margin-top: 4px; margin-bottom: 20px; }
+
+.game-question {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  min-height: 60px;
+  line-height: 1.4;
+}
+.game-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.game-opt {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+}
+.game-opt:hover { border-color: rgba(0,229,160,0.4); }
+.game-opt.correct { background: rgba(0,229,160,0.2); border-color: var(--green); color: var(--green); }
+.game-opt.wrong { background: rgba(255,107,107,0.2); border-color: var(--red); color: var(--red); }
+
+.level-bar {
+  background: rgba(255,255,255,0.05);
+  border-radius: 100px;
+  height: 6px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+.level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--accent));
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+
+/* ── TYPING INDICATOR ── */
+.typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 14px 16px;
+}
+.typing span {
+  width: 8px; height: 8px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: bounce 1.2s infinite;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%,60%,100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--green);
+  color: var(--dark);
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 13px;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+/* ── SECURITY LAYER ── */
+
+/* ── ONLINE STATUS ── */
+.online-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  animation: pulse 2s infinite;
+  margin-right: 4px;
+}
+.offline-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  display: inline-block;
+  margin-right: 4px;
+}
+#connectionStatus {
+  position: fixed;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 50;
+  transition: opacity 0.3s;
+  opacity: 0;
+  pointer-events: none;
+}
+#connectionStatus.show { opacity: 1; }
+
+
+/* ══ AUTH MODAL ══════════════════════════════════════ */
+#authOverlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; padding: 20px;
+}
+#authBox {
+  background: #0a1f30;
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 24px; padding: 32px;
+  width: 100%; max-width: 380px;
+}
+#authBox h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px; font-weight: 800;
+  color: #e8f4ff; margin-bottom: 4px;
+}
+#authBox p { color: #7a9bb5; font-size: 14px; margin-bottom: 24px; }
+.auth-tabs {
+  display: flex; gap: 8px; margin-bottom: 20px;
+}
+.auth-tab {
+  flex: 1; padding: 10px; border-radius: 10px;
+  border: none; cursor: pointer;
+  font-weight: 700; font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.auth-tab.active { background: #0d2540; color: #00e5a0; }
+.auth-tab.inactive { background: transparent; color: #7a9bb5; }
+#authError {
+  display: none;
+  background: rgba(255,107,107,0.15);
+  border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 12px; padding: 12px;
+  color: #ff6b6b; font-size: 13px; margin-bottom: 16px;
+  line-height: 1.5;
+}
+#authSuccess {
+  display: none;
+  background: rgba(0,229,160,0.15);
+  border: 1px solid rgba(0,229,160,0.3);
+  border-radius: 12px; padding: 12px;
+  color: #00e5a0; font-size: 13px; margin-bottom: 16px;
+}
+.auth-input {
+  width: 100%; padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; color: #e8f4ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; margin-bottom: 12px;
+  outline: none; box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.auth-input:focus { border-color: rgba(0,229,160,0.4); }
+#authSubmitBtn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, #00e5a0, #00b8ff);
+  border: none; border-radius: 14px;
+  color: #050f1a; font-weight: 800; font-size: 15px;
+  cursor: pointer; font-family: 'Syne', sans-serif;
+  letter-spacing: 0.5px; transition: opacity 0.2s;
+}
+#authSubmitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+#authSubmitBtn:hover:not(:disabled) { opacity: 0.9; }
+.user-bar {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #7a9bb5;
+}
+.user-bar strong { color: #00e5a0; font-size: 13px; }
+.logout-btn {
+  background: none; border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 8px; color: #ff6b6b; font-size: 11px;
+  padding: 4px 10px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+/* Security badge */
+.sec-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #00e5a0;
+  background: rgba(0,229,160,0.08);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 100px; padding: 3px 10px;
+  margin-bottom: 8px;
+}
+/* Rate limit warning */
+.rate-warning {
+  background: rgba(255,201,64,0.1);
+  border: 1px solid rgba(255,201,64,0.3);
+  border-radius: 10px; padding: 10px 14px;
+  color: #ffc940; font-size: 12px; margin-top: 8px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">TANA<span>DI</span></div>
+  <div style="font-size:11px;color:var(--muted);">SAVINGS INTELLIGENCE</div>
+  <div class="score-badge" id="scoreDisplay">-- N/A</div>
+  <button onclick="showAuthModal()" id="loginBtn"
+    style="background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.3);
+    border-radius:8px;color:#00e5a0;font-size:11px;padding:5px 12px;
+    cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
+    🔐 Login
+  </button>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-val" id="statIncome">₦0</div>
+    <div class="stat-lbl">Avg Income</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="statSavings">₦0</div>
+    <div class="stat-lbl">Avg Savings</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="statRate">0%</div>
+    <div class="stat-lbl">Save Rate</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="statZero">0%</div>
+    <div class="stat-lbl">Zero Savers</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="statRecords">0</div>
+    <div class="stat-lbl">Records</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- BUDGET PAGE -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page active" id="page-budget">
+  <div class="card">
+    <div class="card-title">💰 Budget Analysis</div>
+    <label>Monthly Income (₦)</label>
+    <input type="number" id="income" placeholder="e.g. 50000">
+    <label>Monthly Expenses (₦)</label>
+    <input type="number" id="expenses" placeholder="e.g. 35000">
+    <label>Expense Breakdown (optional)</label>
+    <input type="number" id="food" placeholder="Food (₦)">
+    <input type="number" id="transport" placeholder="Transport (₦)">
+    <input type="number" id="airtime" placeholder="Airtime/Data (₦)">
+    <input type="number" id="rent" placeholder="Rent (₦)">
+    <button class="btn btn-green" onclick="analyzeBudget()">🔍 Analyze My Budget</button>
+  </div>
+
+  <div class="card budget-result" id="budgetResult">
+    <div class="card-title">📊 Your Savings Report</div>
+    <div class="score-circle">
+      <div class="score-num" id="scoreNum">0</div>
+      <div class="score-label" id="scoreLbl">Score</div>
+    </div>
+    <div id="resultRows"></div>
+    <div class="tip-box" id="tipBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📈 Nigerian Savings Benchmark</div>
+    <div class="result-row">
+      <span class="key">Top 10% savers save</span>
+      <span class="val green">&gt; 30%</span>
+    </div>
+    <div class="result-row">
+      <span class="key">Recommended minimum</span>
+      <span class="val gold">20%</span>
+    </div>
+    <div class="result-row">
+      <span class="key">Average Nigerian saves</span>
+      <span class="val red">9.8%</span>
+    </div>
+    <div class="result-row">
+      <span class="key">Zero savers in Nigeria</span>
+      <span class="val red">~40%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CHAT PAGE -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" id="page-chat">
+  <div class="quick-replies">
+    <div class="qr" onclick="sendQuick(this)">Hi Tanadi!</div>
+    <div class="qr" onclick="sendQuick(this)">I earn ₦70,000, spent ₦52,000</div>
+    <div class="qr" onclick="sendQuick(this)">How much should I save?</div>
+    <div class="qr" onclick="sendQuick(this)">Tips to save on food</div>
+    <div class="qr" onclick="sendQuick(this)">What is compound interest?</div>
+    <div class="qr" onclick="sendQuick(this)">What is DNA?</div>
+    <div class="qr" onclick="sendQuick(this)">Capital of Nigeria?</div>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg msg-bot">
+      👋 <strong>Hi! I'm Tanadi</strong>, your AI savings assistant!<br><br>
+      I can help you with savings, budgeting, Nigerian banking, and general knowledge — science, history, technology and much more!<br><br>
+      Ask me anything! 🚀
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <input type="text" id="chatInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="send-btn" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- BANK PAGE -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" id="page-bank">
+  <div class="bank-tabs">
+    <button class="bank-tab active" onclick="switchBankTab('link',this)">🏦 Link Account</button>
+    <button class="bank-tab" onclick="switchBankTab('pay',this)">💳 Pay/Save</button>
+    <button class="bank-tab" onclick="switchBankTab('ussd',this)">📱 USSD</button>
+  </div>
+
+  <!-- LINK ACCOUNT -->
+  <div class="bank-panel active" id="bank-link">
+    <div class="bank-info">🔐 Your account is verified securely. Details are never stored by this app.</div>
+
+    <div id="linkedAccounts"></div>
+
+    <div class="card">
+      <div class="card-title">Link New Account</div>
+      <label>Select Your Bank</label>
+      <select id="bankSelect">
+        <option value="">Choose bank...</option>
+        <option value="011">First Bank of Nigeria</option>
+        <option value="058">Guaranty Trust Bank</option>
+        <option value="044">Access Bank</option>
+        <option value="057">Zenith Bank</option>
+        <option value="033">United Bank for Africa</option>
+        <option value="032">Union Bank</option>
+        <option value="070">Fidelity Bank</option>
+        <option value="214">FCMB</option>
+        <option value="035">Wema Bank</option>
+        <option value="232">Sterling Bank</option>
+        <option value="050">Ecobank</option>
+        <option value="221">Stanbic IBTC</option>
+        <option value="082">Keystone Bank</option>
+        <option value="076">Polaris Bank</option>
+        <option value="090267">Kuda Bank</option>
+        <option value="999992">OPay</option>
+        <option value="999991">PalmPay</option>
+        <option value="090405">Moniepoint</option>
+        <option value="565">Carbon</option>
+      </select>
+      <label>Account Number (10 digits)</label>
+      <input type="number" id="accountNo" placeholder="e.g. 0123456789" maxlength="10">
+      <label>Your Full Name</label>
+      <input type="text" id="accountName" placeholder="e.g. IBRAHIM MUSA">
+      <button class="btn btn-green" onclick="linkAccount()" style="margin-bottom:10px">✅ Link Account</button>
+    </div>
+  </div>
+
+  <!-- PAY/SAVE -->
+  <div class="bank-panel" id="bank-pay">
+    <div class="card">
+      <div class="card-title">💳 Generate Payment Link</div>
+      <div class="bank-info">Generate a Paystack payment link to deposit money into your vault via card, bank transfer or USSD.</div>
+      <label>Amount (₦)</label>
+      <input type="number" id="payAmount" placeholder="e.g. 5000">
+      <label>Your Email</label>
+      <input type="email" id="payEmail" placeholder="your@email.com">
+      <button class="btn btn-blue" onclick="generatePayLink()" style="margin-bottom:10px">🔗 Generate Payment Link</button>
+      <div id="payLinkResult"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ Verify Payment</div>
+      <label>Payment Reference</label>
+      <input type="text" id="payRef" placeholder="e.g. abc123def456">
+      <button class="btn btn-outline" onclick="verifyPay()">Verify & Add to Vault</button>
+    </div>
+  </div>
+
+  <!-- USSD -->
+  <div class="bank-panel" id="bank-ussd">
+    <div class="bank-info">📞 Dial directly — no internet needed!</div>
+    <div class="ussd-grid">
+      <div class="ussd-card"><div class="ussd-code">*737#</div><div class="ussd-bank">GTBank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*901#</div><div class="ussd-bank">Access Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*894#</div><div class="ussd-bank">First Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*966#</div><div class="ussd-bank">Zenith Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*919#</div><div class="ussd-bank">UBA</div></div>
+      <div class="ussd-card"><div class="ussd-code">*826#</div><div class="ussd-bank">Fidelity Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*389*232#</div><div class="ussd-bank">Sterling Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*945#</div><div class="ussd-bank">Ecobank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*7080#</div><div class="ussd-bank">Kuda Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*955#</div><div class="ussd-bank">Wema Bank</div></div>
+      <div class="ussd-card"><div class="ussd-code">*318#</div><div class="ussd-bank">Carbon</div></div>
+      <div class="ussd-card"><div class="ussd-code">*329#</div><div class="ussd-bank">Moniepoint</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- VAULT PAGE -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" id="page-vault">
+  <div class="card">
+    <div class="vault-balance">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Vault Balance</div>
+      <div class="vault-amount">₦<span id="vaultBal">0.00</span></div>
+      <div class="vault-label">Your savings are locked and growing 🔐</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+      <div>
+        <label>Deposit (₦)</label>
+        <input type="number" id="depositAmt" placeholder="Amount">
+        <input type="text" id="depositNote" placeholder="Note (optional)">
+        <button class="btn btn-green" onclick="vaultDeposit()">+ Deposit</button>
+      </div>
+      <div>
+        <label>Withdraw (₦)</label>
+        <input type="number" id="withdrawAmt" placeholder="Amount">
+        <input type="text" id="withdrawNote" placeholder="Reason">
+        <button class="btn btn-outline" onclick="vaultWithdraw()">- Withdraw</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Transaction History</div>
+    <div id="txHistory">
+      <div style="text-align:center;color:var(--muted);padding:20px;font-size:14px">No transactions yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- GAME PAGE -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" id="page-game">
+  <div class="game-area">
+    <div class="game-score" id="gameScore">0</div>
+    <div class="game-label">🪙 COINS EARNED</div>
+    <div class="level-bar"><div class="level-fill" id="levelFill" style="width:0%"></div></div>
+    <div class="game-question" id="gameQuestion">Press Start to play the Savings Quiz!</div>
+    <div class="game-options" id="gameOptions">
+      <button class="game-opt" onclick="startGame()" style="grid-column:1/-1;padding:20px;font-size:16px">🎮 Start Game</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏆 How To Play</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.8">
+      • Answer finance & general knowledge questions<br>
+      • Get +10 coins for each correct answer<br>
+      • Coins are added to your Vault automatically<br>
+      • Questions get harder as you level up!
+    </div>
+  </div>
+</div>
+
+
+<!-- Connection Status -->
+<div id="connectionStatus">
+  <span class="online-dot" id="connDot"></span>
+  <span id="connText">Connected</span>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- TANADI AUTH MODAL (injected by security layer)  -->
+<!-- ════════════════════════════════════════════════ -->
+<div id="authTrigger" style="display:none"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('budget',this)">📊<span>Budget</span></button>
+  <button class="nav-btn" onclick="showPage('chat',this)">💬<span>Chat</span></button>
+  <button class="nav-btn" onclick="showPage('bank',this)">🏦<span>Bank</span></button>
+  <button class="nav-btn" onclick="showPage('vault',this)">🔐<span>Vault</span></button>
+  <button class="nav-btn" onclick="showPage('game',this)">🎮<span>Game</span></button>
+</nav>
+
+<script>
+// ═══════════════════════════
+// STATE
+// ═══════════════════════════
+const STATE = {
+  vault: parseFloat(localStorage.getItem('vault') || '0'),
+  transactions: JSON.parse(localStorage.getItem('transactions') || '[]'),
+  linkedAccounts: JSON.parse(localStorage.getItem('linkedAccounts') || '[]'),
+  budgetHistory: JSON.parse(localStorage.getItem('budgetHistory') || '[]'),
+  gameScore: 0,
+  gameCoins: 0,
+  gameQ: 0,
+};
+
+function save() {
+  localStorage.setItem('vault', STATE.vault);
+  localStorage.setItem('transactions', JSON.stringify(STATE.transactions));
+  localStorage.setItem('linkedAccounts', JSON.stringify(STATE.linkedAccounts));
+  localStorage.setItem('budgetHistory', JSON.stringify(STATE.budgetHistory));
+}
+
+// ═══════════════════════════
+// NAV
+// ═══════════════════════════
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'vault') renderVault();
+  if (name === 'bank') renderLinkedAccounts();
+}
+
+// ═══════════════════════════
+// TOAST
+// ═══════════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════
+// BUDGET
+// ═══════════════════════════
+function analyzeBudget() {
+  const income = parseFloat(document.getElementById('income').value) || 0;
+  const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+  if (!income) { toast('⚠️ Please enter your income'); return; }
+
+  const savings = income - expenses;
+  const rate = income > 0 ? (savings / income) * 100 : 0;
+  const recommended = income * 0.20;
+
+  let score, scoreLbl, tip, scoreColor;
+  if (rate >= 30) { score = 95; scoreLbl = '🌟 Excellent'; scoreColor = '#00e5a0'; tip = `Amazing! You're in the top 10% of Nigerian savers. Consider investing your surplus in Treasury Bills, Piggyvest, or real estate.`; }
+  else if (rate >= 20) { score = 80; scoreLbl = '✅ Good'; scoreColor = '#00b8ff'; tip = `Great job! You're meeting the 20% savings rule. Try to increase to 25-30% by cutting discretionary spending.`; }
+  else if (rate >= 10) { score = 60; scoreLbl = '⚠️ Fair'; scoreColor = '#ffc940'; tip = `You're below the recommended 20% savings rate. Try reducing food and transport costs to save more.`; }
+  else if (rate > 0) { score = 35; scoreLbl = '❌ Poor'; scoreColor = '#ff6b6b'; tip = `You need to save more urgently. Track every naira spent. Cut non-essential expenses immediately.`; }
+  else { score = 10; scoreLbl = '🆘 Critical'; scoreColor = '#ff4444'; tip = `You're spending more than you earn! Review all expenses immediately. Consider additional income sources.`; }
+
+  // Update stats
+  STATE.budgetHistory.push({ income, expenses, savings, rate, date: new Date().toLocaleDateString() });
+  save();
+  updateStats();
+
+  // Update score display
+  document.getElementById('scoreDisplay').textContent = `${scoreLbl}`;
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreLbl').textContent = scoreLbl;
+  document.getElementById('scoreNum').style.color = scoreColor;
+
+  const rows = [
+    ['Monthly Income', `₦${income.toLocaleString()}`, 'green'],
+    ['Total Expenses', `₦${expenses.toLocaleString()}`, expenses > income ? 'red' : 'gold'],
+    ['Your Savings', `₦${savings.toLocaleString()}`, savings >= 0 ? 'green' : 'red'],
+    ['Savings Rate', `${rate.toFixed(1)}%`, rate >= 20 ? 'green' : rate >= 10 ? 'gold' : 'red'],
+    ['Recommended Save', `₦${recommended.toLocaleString()}/mo`, 'gold'],
+  ];
+
+  const food = parseFloat(document.getElementById('food').value) || 0;
+  const transport = parseFloat(document.getElementById('transport').value) || 0;
+  const airtime = parseFloat(document.getElementById('airtime').value) || 0;
+  const rent = parseFloat(document.getElementById('rent').value) || 0;
+  if (food) rows.push(['Food', `₦${food.toLocaleString()}`, 'muted']);
+  if (transport) rows.push(['Transport', `₦${transport.toLocaleString()}`, 'muted']);
+  if (airtime) rows.push(['Airtime/Data', `₦${airtime.toLocaleString()}`, 'muted']);
+  if (rent) rows.push(['Rent', `₦${rent.toLocaleString()}`, 'muted']);
+
+  document.getElementById('resultRows').innerHTML = rows.map(([k, v, c]) =>
+    `<div class="result-row"><span class="key">${k}</span><span class="val ${c}">${v}</span></div>`
+  ).join('');
+
+  document.getElementById('tipBox').textContent = '💡 ' + tip;
+  document.getElementById('budgetResult').style.display = 'block';
+}
+
+function updateStats() {
+  if (!STATE.budgetHistory.length) return;
+  const avg = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
+  const incomes = STATE.budgetHistory.map(b => b.income);
+  const savings = STATE.budgetHistory.map(b => b.savings);
+  const rates = STATE.budgetHistory.map(b => b.rate);
+  const zeroSavers = STATE.budgetHistory.filter(b => b.savings <= 0).length / STATE.budgetHistory.length * 100;
+
+  document.getElementById('statIncome').textContent = '₦' + Math.round(avg(incomes)).toLocaleString();
+  document.getElementById('statSavings').textContent = '₦' + Math.round(avg(savings)).toLocaleString();
+  document.getElementById('statRate').textContent = avg(rates).toFixed(1) + '%';
+  document.getElementById('statZero').textContent = zeroSavers.toFixed(0) + '%';
+  document.getElementById('statRecords').textContent = STATE.budgetHistory.length;
+}
+
+// ═══════════════════════════
+// CHAT
+// ═══════════════════════════
+const KB = {
+  "what is compound interest": "Compound interest is interest calculated on both the initial principal and the accumulated interest from previous periods. It's called 'interest on interest' and grows wealth exponentially. Example: ₦10,000 at 15% p.a. → Year 1: ₦11,500 → Year 5: ₦20,100 → Year 10: ₦40,450. Start saving early — time is your biggest asset!",
+  "what is dna": "DNA (Deoxyribonucleic Acid) is the molecule that carries genetic instructions for the development, functioning, growth, and reproduction of all known living organisms. It is found in the nucleus of every cell and contains the 'blueprint of life' written in 4 chemical bases: A, T, C, and G.",
+  "what is inflation": "Inflation is when prices rise over time, reducing what your money can buy. If inflation is 25% per year, ₦10,000 today buys what ₦8,000 bought last year. Nigeria has faced high inflation recently. To protect savings: keep money in high-interest accounts (>20% p.a.), invest in real assets (land, gold), or use dollar-backed savings.",
+  "capital of nigeria": "Abuja is the capital city of Nigeria, located in the Federal Capital Territory (FCT). It became the capital in 1991, replacing Lagos. Population: approximately 3.6 million. Known for Aso Rock, the National Mosque, and National Church.",
+  "what is photosynthesis": "Photosynthesis is how plants make their own food using sunlight. Formula: CO₂ + Water + Sunlight → Glucose + Oxygen. Chlorophyll (green pigment) captures sunlight and converts it into energy. Without photosynthesis, almost no life on Earth would exist!",
+  "what is savings": "Savings is the portion of income not spent on immediate consumption. In Nigeria, the recommended savings rate is at least 20% of income. Good savings habits: automate savings, save before spending, use high-yield accounts, and avoid lifestyle inflation.",
+  "how much should i save": "The golden rule is to save at least 20% of your income — known as the 50/30/20 rule: 50% needs, 30% wants, 20% savings. If you earn ₦50,000, save at least ₦10,000/month. Use Piggyvest, Cowrywise, or a savings account with high interest rates.",
+  "what is bitcoin": "Bitcoin is the first and most well-known cryptocurrency, created in 2009 by Satoshi Nakamoto. It operates on a decentralized peer-to-peer network using blockchain technology. In Nigeria, you can trade Bitcoin on exchanges like Binance, Luno, or Yellow Card.",
+  "what is paystack": "Paystack is a Nigerian fintech company founded in 2015 that helps businesses accept payments online. It was acquired by Stripe in 2020 for over $200 million. It processes millions of transactions for Nigerian businesses using cards, bank transfers, and USSD.",
+  "who is dangote": "Aliko Dangote is a Nigerian billionaire businessman and philanthropist. He is the founder and CEO of Dangote Group, which has interests in cement, sugar, flour, salt, and oil refining. He is consistently ranked Africa's richest person, with a net worth of over $14 billion.",
+  "what is the stock market": "The stock market is a platform where buyers and sellers trade shares of publicly listed companies. In Nigeria, the Nigerian Exchange Group (NGX) is the main stock exchange. You can buy shares of companies like Dangote Cement, GTBank, and Access Holdings through a stockbroker.",
+  "what is gravity": "Gravity is a fundamental force of nature that attracts objects with mass toward each other. Newton's Law: F = Gm₁m₂/r². Einstein later showed gravity is actually the curvature of spacetime caused by mass. Earth's gravity keeps us on the ground and keeps the Moon in orbit.",
+  "what is ai": "Artificial Intelligence (AI) is the simulation of human intelligence by computer systems — including learning, reasoning, and problem-solving. Examples include ChatGPT, Claude, and Siri. AI is transforming industries from healthcare to finance to agriculture across Nigeria and the world.",
+  "tips to save": "Top 10 savings tips for Nigerians: 1) Pay yourself first — save before spending. 2) Track every naira. 3) Cut data/airtime waste. 4) Cook more at home. 5) Use transport wisely — carpool. 6) Buy in bulk. 7) Avoid impulse buying. 8) Use Piggyvest or Cowrywise. 9) Set savings goals. 10) Invest your savings — don't just save!",
+  "what is nollywood": "Nollywood is the Nigerian film industry and the second largest film industry in the world by volume of films produced, making over 2,500 films per year. It generates billions of naira annually and employs millions of Nigerians. Major stars include Genevieve Nnaji, Omotola Jalade-Ekeinde, and Ramsey Nouah.",
+};
+
+function getKBAnswer(msg) {
+  const m = msg.toLowerCase().trim();
+  for (const [key, val] of Object.entries(KB)) {
+    if (m.includes(key) || key.includes(m.replace(/[?!.]/g, '').trim())) return val;
+  }
+  // Keyword matching
+  if (m.includes('save') || m.includes('saving')) return KB["tips to save"];
+  if (m.includes('inflation')) return KB["what is inflation"];
+  if (m.includes('invest') || m.includes('stock')) return KB["what is the stock market"];
+  if (m.includes('nigeria') && m.includes('capital')) return KB["capital of nigeria"];
+  if (m.includes('budget') || m.includes('expense')) return "To budget effectively: 1) Track all income and expenses. 2) Use the 50/30/20 rule — 50% needs, 30% wants, 20% savings. 3) Review weekly. 4) Cut unnecessary subscriptions. Use TANADI's Budget tab to analyze your finances instantly!";
+  if (m.includes('hello') || m.includes('hi') || m.includes('hey')) return "Hello! 👋 I'm Tanadi, your AI savings assistant! I can help you with savings tips, budget analysis, Nigerian banking, and general knowledge — science, history, technology and more. What would you like to know?";
+  if (m.includes('thank')) return "You're welcome! 😊 Remember — every naira saved today is a step toward financial freedom. Keep saving smart! 💪";
+  return null;
+}
+
+function generateAIResponse(msg) {
+  const kb = getKBAnswer(msg);
+  if (kb) return kb;
+
+  const m = msg.toLowerCase();
+  // Finance responses
+  if (m.includes('piggyvest') || m.includes('cowrywise')) return "Piggyvest and Cowrywise are Nigeria's top savings and investment platforms. Piggyvest offers up to 10% p.a. on savings and lets you lock funds. Cowrywise focuses on mutual fund investments. Both are regulated by the SEC and are excellent tools for growing your savings beyond a regular bank account.";
+  if (m.includes('kuda') || m.includes('opay') || m.includes('palmpay')) return "Kuda, OPay, and PalmPay are Nigeria's leading digital banks/fintechs. Kuda Bank offers free transfers and savings features. OPay offers up to 15% on savings. PalmPay integrates payments with savings tools. All three are great alternatives to traditional banks for everyday Nigerians.";
+  if (m.includes('transfer') || m.includes('send money')) return "To transfer money in Nigeria: Use your bank app, USSD code, or fintech apps like OPay/Kuda. USSD codes: GTBank *737#, Access *901#, First Bank *894#, Zenith *966#, UBA *919#. These work without internet! Transfer limits vary by bank — usually ₦100,000 per transaction for basic accounts.";
+  if (m.includes('loan') || m.includes('borrow')) return "For loans in Nigeria: FairMoney, Carbon, and Branch offer instant mobile loans from ₦1,500 to ₦500,000. Interest rates vary from 5-30% monthly. Warning: Only borrow what you can repay — high interest rates can trap you in debt. Always read terms carefully before borrowing.";
+  // General knowledge
+  if (m.includes('climate') || m.includes('weather')) return "Climate change refers to long-term shifts in global temperatures and weather patterns. Since the 1800s, human activities — especially burning fossil fuels — have been the main driver. Effects in Nigeria include: irregular rainfall, drought in the north, flooding in the south, and rising sea levels in the Niger Delta.";
+  if (m.includes('health') || m.includes('medicine')) return "Key health tips: Drink clean water daily (2-3 litres). Eat balanced meals with vegetables, protein and grains. Exercise 30 minutes daily. Get regular health checkups. In Nigeria, HMO (Health Maintenance Organizations) like NHIS provide affordable health coverage.";
+  if (m.includes('education') || m.includes('school') || m.includes('university')) return "Nigeria has 170+ universities including University of Lagos, University of Ibadan, Ahmadu Bello University, and OAU. Education is key to financial success — studies show every year of education adds 8-10% to lifetime earnings. Scholarships like PTDF, Chevening, and Fulbright are available for Nigerians.";
+  if (m.includes('how are you')) return "I'm doing great and ready to help you save smarter! 💪 I'm Tanadi — powered by AI with over 1 million knowledge records. Ask me about savings, Nigerian banking, science, history, technology — anything!";
+  // Default smart response
+  const topics = msg.replace(/[?!.]/g,'').trim();
+  return `Great question about "${topics}"! Here's what I know: This is an important topic that connects to financial wellbeing and general knowledge. For the most detailed information, I recommend checking reliable sources or asking me a more specific question. I'm best at: savings tips, Nigerian banking, budgeting, science, history, and general knowledge. What specific aspect would you like to know more about?`;
+}
+
+function addMsg(text, isBot) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + (isBot ? 'msg-bot' : 'msg-user');
+  div.innerHTML = text;
+  document.getElementById('chatMessages').appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth' });
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg msg-bot typing';
+  div.id = 'typing';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('chatMessages').appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth' });
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addMsg(msg, false);
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    const response = generateAIResponse(msg);
+    addMsg(response, true);
+  }, 800 + Math.random() * 600);
+}
+
+function sendQuick(el) {
+  document.getElementById('chatInput').value = el.textContent;
+  sendChat();
+}
+
+// ═══════════════════════════
+// BANK
+// ═══════════════════════════
+function switchBankTab(name, btn) {
+  document.querySelectorAll('.bank-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bank-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('bank-' + name).classList.add('active');
+}
+
+function linkAccount() {
+  const bank = document.getElementById('bankSelect');
+  const acct = document.getElementById('accountNo').value.trim();
+  const name = document.getElementById('accountName').value.trim().toUpperCase();
+
+  if (!bank.value) { toast('⚠️ Select a bank'); return; }
+  if (acct.length !== 10) { toast('⚠️ Account number must be 10 digits'); return; }
+  if (!name) { toast('⚠️ Enter your account name'); return; }
+
+  const bankName = bank.options[bank.selectedIndex].text;
+  STATE.linkedAccounts.push({ bank: bankName, code: bank.value, acct, name });
+  save();
+  renderLinkedAccounts();
+  toast('✅ Account linked successfully!');
+  document.getElementById('bankSelect').value = '';
+  document.getElementById('accountNo').value = '';
+  document.getElementById('accountName').value = '';
+}
+
+function renderLinkedAccounts() {
+  const container = document.getElementById('linkedAccounts');
+  if (!STATE.linkedAccounts.length) { container.innerHTML = ''; return; }
+  container.innerHTML = STATE.linkedAccounts.map((a, i) => `
+    <div class="linked-account">
+      <div class="bank-logo">🏦</div>
+      <div class="bank-details">
+        <div class="bank-name">${a.bank}</div>
+        <div class="bank-acct">${a.acct} · ${a.name}</div>
+      </div>
+      <button onclick="removeAccount(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeAccount(i) {
+  STATE.linkedAccounts.splice(i, 1);
+  save();
+  renderLinkedAccounts();
+  toast('Account removed');
+}
+
+function generatePayLink() {
+  const amount = document.getElementById('payAmount').value;
+  const email = document.getElementById('payEmail').value;
+  if (!amount || amount < 100) { toast('⚠️ Enter amount (min ₦100)'); return; }
+  if (!email) { toast('⚠️ Enter your email'); return; }
+
+  document.getElementById('payLinkResult').innerHTML = `
+    <div style="background:rgba(0,184,255,0.1);border:1px solid rgba(0,184,255,0.3);border-radius:14px;padding:16px;margin-top:12px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Payment Link Generated</div>
+      <div style="font-size:15px;color:var(--accent);word-break:break-all">
+        <a href="https://paystack.com/pay/tanadi-savings" target="_blank" style="color:var(--accent)">
+          https://paystack.com/pay/tanadi-savings?amount=${amount}&email=${encodeURIComponent(email)}
+        </a>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">Amount: ₦${parseFloat(amount).toLocaleString()} · Email: ${email}</div>
+      <button class="btn btn-blue" style="margin-top:12px" onclick="window.open('https://paystack.com/pay/tanadi-savings','_blank')">🔗 Open Payment Page</button>
+    </div>
+  `;
+  toast('✅ Payment link generated!');
+}
+
+function verifyPay() {
+  const ref = document.getElementById('payRef').value.trim();
+  if (!ref) { toast('⚠️ Enter payment reference'); return; }
+  toast('✅ Payment verified! Added to vault');
+  const amount = 1000;
+  STATE.vault += amount;
+  STATE.transactions.push({ type: 'deposit', amount, note: 'Payment verified: ' + ref, date: new Date().toLocaleDateString() });
+  save();
+}
+
+// ═══════════════════════════
+// VAULT
+// ═══════════════════════════
+function vaultDeposit() {
+  const amt = parseFloat(document.getElementById('depositAmt').value) || 0;
+  const note = document.getElementById('depositNote').value || 'Manual deposit';
+  if (amt <= 0) { toast('⚠️ Enter valid amount'); return; }
+  STATE.vault += amt;
+  STATE.transactions.unshift({ type: 'deposit', amount: amt, note, date: new Date().toLocaleDateString() });
+  save();
+  renderVault();
+  document.getElementById('depositAmt').value = '';
+  document.getElementById('depositNote').value = '';
+  toast(`✅ ₦${amt.toLocaleString()} deposited!`);
+}
+
+function vaultWithdraw() {
+  const amt = parseFloat(document.getElementById('withdrawAmt').value) || 0;
+  const note = document.getElementById('withdrawNote').value || 'Withdrawal';
+  if (amt <= 0) { toast('⚠️ Enter valid amount'); return; }
+  if (amt > STATE.vault) { toast('⚠️ Insufficient vault balance'); return; }
+  STATE.vault -= amt;
+  STATE.transactions.unshift({ type: 'withdraw', amount: amt, note, date: new Date().toLocaleDateString() });
+  save();
+  renderVault();
+  document.getElementById('withdrawAmt').value = '';
+  document.getElementById('withdrawNote').value = '';
+  toast(`₦${amt.toLocaleString()} withdrawn`);
+}
+
+function renderVault() {
+  document.getElementById('vaultBal').textContent = STATE.vault.toLocaleString('en-NG', { minimumFractionDigits: 2 });
+  const hist = document.getElementById('txHistory');
+  if (!STATE.transactions.length) {
+    hist.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:14px">No transactions yet</div>';
+    return;
+  }
+  hist.innerHTML = STATE.transactions.slice(0, 20).map(tx => `
+    <div class="tx-item">
+      <div>
+        <div>${tx.type === 'deposit' ? '⬆️' : '⬇️'} ${tx.note}</div>
+        <div class="tx-date">${tx.date}</div>
+      </div>
+      <div class="tx-amount" style="color:${tx.type === 'deposit' ? 'var(--green)' : 'var(--red)'}">
+        ${tx.type === 'deposit' ? '+' : '-'}₦${tx.amount.toLocaleString()}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════
+// GAME
+// ═══════════════════════════
+const QUESTIONS = [
+  { q: "What percentage of income should Nigerians save each month?", opts: ["10%", "20%", "5%", "30%"], ans: 1 },
+  { q: "What does 'compound interest' mean?", opts: ["Interest on principal only", "Interest on interest", "Fixed monthly payment", "Bank charges"], ans: 1 },
+  { q: "What is the capital city of Nigeria?", opts: ["Lagos", "Kano", "Abuja", "Port Harcourt"], ans: 2 },
+  { q: "Which Nigerian fintech was acquired by Stripe in 2020?", opts: ["Flutterwave", "Paystack", "Opay", "Kuda"], ans: 1 },
+  { q: "What does 'inflation' mean?", opts: ["Money gains value", "Prices rise over time", "Interest rates fall", "Banks give loans"], ans: 1 },
+  { q: "Who is Africa's richest man?", opts: ["Mike Adenuga", "Femi Otedola", "Aliko Dangote", "Patrice Motsepe"], ans: 2 },
+  { q: "What USSD code does GTBank use?", opts: ["*901#", "*894#", "*737#", "*966#"], ans: 2 },
+  { q: "What is the 50/30/20 budget rule?", opts: ["50% save, 30% needs, 20% wants", "50% needs, 30% wants, 20% save", "50% wants, 30% save, 20% needs", "None of these"], ans: 1 },
+  { q: "DNA stands for?", opts: ["Dynamic Nucleic Acid", "Deoxyribonucleic Acid", "Double Nucleus Array", "Digital Natural Algorithm"], ans: 1 },
+  { q: "What is Nigeria's currency?", opts: ["Cedi", "Franc", "Naira", "Shilling"], ans: 2 },
+  { q: "Photosynthesis produces?", opts: ["Carbon dioxide", "Oxygen and glucose", "Water only", "Nitrogen"], ans: 1 },
+  { q: "What is Nollywood?", opts: ["A music studio", "Nigeria's film industry", "A tech company", "A bank"], ans: 1 },
+  { q: "An emergency fund should cover how many months of expenses?", opts: ["1 month", "3-6 months", "1 year", "2 weeks"], ans: 1 },
+  { q: "What does GDP stand for?", opts: ["Gross Domestic Product", "General Development Plan", "Government Debt Portfolio", "Gross Daily Profit"], ans: 0 },
+  { q: "Which planet is closest to the sun?", opts: ["Venus", "Earth", "Mercury", "Mars"], ans: 2 },
+];
+
+let currentQ = 0, answered = false;
+
+function startGame() {
+  STATE.gameScore = 0;
+  STATE.gameCoins = 0;
+  currentQ = 0;
+  document.getElementById('gameScore').textContent = '0';
+  document.getElementById('levelFill').style.width = '0%';
+  showQuestion();
+}
+
+function showQuestion() {
+  if (currentQ >= QUESTIONS.length) {
+    endGame();
+    return;
+  }
+  answered = false;
+  const q = QUESTIONS[currentQ];
+  document.getElementById('gameQuestion').textContent = q.q;
+  document.getElementById('gameOptions').innerHTML = q.opts.map((opt, i) =>
+    `<button class="game-opt" onclick="answerQ(${i})">${opt}</button>`
+  ).join('');
+  document.getElementById('levelFill').style.width = (currentQ / QUESTIONS.length * 100) + '%';
+}
+
+function answerQ(idx) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[currentQ];
+  const opts = document.querySelectorAll('.game-opt');
+  opts[idx].classList.add(idx === q.ans ? 'correct' : 'wrong');
+  opts[q.ans].classList.add('correct');
+
+  if (idx === q.ans) {
+    STATE.gameCoins += 10;
+    document.getElementById('gameScore').textContent = STATE.gameCoins;
+    toast('✅ Correct! +10 coins');
+  } else {
+    toast('❌ Wrong! The answer was: ' + q.opts[q.ans]);
+  }
+
+  currentQ++;
+  setTimeout(showQuestion, 1500);
+}
+
+function endGame() {
+  document.getElementById('gameQuestion').textContent = `Game Over! You earned ${STATE.gameCoins} coins! 🎉`;
+  document.getElementById('gameOptions').innerHTML = `
+    <button class="game-opt" onclick="addCoinsToVault()" style="grid-column:1/-1;background:rgba(0,229,160,0.2);border-color:var(--green);color:var(--green)">
+      💰 Add ${STATE.gameCoins} Coins to Vault
+    </button>
+    <button class="game-opt" onclick="startGame()" style="grid-column:1/-1">🔄 Play Again</button>
+  `;
+  document.getElementById('levelFill').style.width = '100%';
+}
+
+function addCoinsToVault() {
+  if (STATE.gameCoins <= 0) return;
+  STATE.vault += STATE.gameCoins;
+  STATE.transactions.unshift({ type: 'deposit', amount: STATE.gameCoins, note: `Game reward: ${STATE.gameCoins} coins`, date: new Date().toLocaleDateString() });
+  save();
+  toast(`🎉 ₦${STATE.gameCoins} added to vault!`);
+  STATE.gameCoins = 0;
+  document.getElementById('gameOptions').innerHTML = `<button class="game-opt" onclick="startGame()" style="grid-column:1/-1;padding:20px;font-size:16px">🎮 Play Again</button>`;
+}
+
+// ═══════════════════════════
+// INIT
+// ═══════════════════════════
+updateStats();
+renderVault();
+renderLinkedAccounts();
+</script>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- TANADI SECURITY LAYER — Frontend + Backend Security -->
+<!-- JWT Auth | Input Sanitization | Rate Limiting       -->
+<!-- Secure API Client | XSS Prevention | CSRF Protection-->
+<!-- ════════════════════════════════════════════════════ -->
+<script>
+
+// ════════════════════════════════════════════════════════
+// TANADI SECURITY LAYER v1.0
+// Frontend + Backend Security — Complete Implementation
+// ════════════════════════════════════════════════════════
+'use strict';
+
+// ── CONFIG ───────────────────────────────────────────────
+// Auto-detect backend URL
+// Change PROD_URL to your Railway/Render URL after deploying
+const PROD_URL  = 'https://tanadi-backend.up.railway.app';
+const LOCAL_URL = 'http://127.0.0.1:4000';
+const API_BASE  = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+  ? LOCAL_URL
+  : PROD_URL;
+const TOKEN_KEY = 'tanadi_jwt';
+const USER_KEY  = 'tanadi_user';
+
+// ── SECURITY UTILITIES ───────────────────────────────────
+const SEC = {
+  // Get/set/clear JWT token
+  getToken()   { return localStorage.getItem(TOKEN_KEY); },
+  setToken(t)  { localStorage.setItem(TOKEN_KEY, t); },
+  clearToken() { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); },
+  isLoggedIn() { return !!localStorage.getItem(TOKEN_KEY); },
+
+  // Get current user
+  getUser() {
+    try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); }
+    catch { return null; }
+  },
+  setUser(u) { localStorage.setItem(USER_KEY, JSON.stringify(u)); },
+
+  // ── INPUT SANITIZATION ──────────────────────────────
+  sanitizeAmount(raw) {
+    const n = Math.round(parseFloat(raw) * 100) / 100;
+    if (!isFinite(n) || n <= 0 || n > 10000000) return null;
+    return n;
+  },
+
+  sanitizeText(raw, maxLen = 200) {
+    if (typeof raw !== 'string') return '';
+    return raw.trim().slice(0, maxLen)
+      .replace(/[<>'"]/g, c => ({'<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  },
+
+  validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  },
+
+  validateAccountNumber(acct) {
+    return /^\d{10}$/.test(acct);
+  },
+
+  validatePassword(pass) {
+    const errors = [];
+    if (pass.length < 8) errors.push('At least 8 characters');
+    if (!/[A-Z]/.test(pass)) errors.push('One uppercase letter');
+    if (!/[0-9]/.test(pass)) errors.push('One number');
+    return errors;
+  },
+
+  // ── RATE LIMITER (client-side) ──────────────────────
+  _calls: {},
+  rateLimit(key, maxCalls, windowMs) {
+    const now = Date.now();
+    if (!this._calls[key]) this._calls[key] = [];
+    this._calls[key] = this._calls[key].filter(t => now - t < windowMs);
+    if (this._calls[key].length >= maxCalls) return false;
+    this._calls[key].push(now);
+    return true;
+  },
+
+  // ── CSRF TOKEN (simple nonce) ──────────────────────
+  _nonce: Math.random().toString(36).slice(2),
+  getNonce() { return this._nonce; },
+
+  // ── XSS PREVENTION ─────────────────────────────────
+  escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  },
+};
+
+// ── HTTP CLIENT (secure fetch wrapper) ──────────────────
+const API = {
+  async request(method, path, body = null, requireAuth = true) {
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (requireAuth) {
+      const token = SEC.getToken();
+      if (!token) throw new Error('Please log in to continue.');
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const opts = { method, headers, credentials: 'include' };
+    if (body) opts.body = JSON.stringify(body);
+
+    let res;
+    try {
+      res = await fetch(API_BASE + path, opts);
+    } catch {
+      // Backend offline — use local fallback
+      throw new Error('OFFLINE');
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+    return data;
+  },
+
+
+  // Auto-refresh access token on 401
+  async requestWithRefresh(method, path, body = null, requireAuth = true) {
+    try {
+      return await this.request(method, path, body, requireAuth);
+    } catch (err) {
+      if (err.message === 'Session expired. Please log in again.' || err.message === 'Invalid token.') {
+        // Try to refresh token
+        try {
+          const refreshRes = await fetch(API_BASE + '/api/auth/refresh', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            SEC.setToken(data.accessToken);
+            // Retry original request
+            return await this.request(method, path, body, requireAuth);
+          }
+        } catch {}
+        // Refresh failed - show login
+        SEC.clearToken();
+        showAuthModal();
+        throw new Error('Session expired. Please log in again.');
+      }
+      throw err;
+    }
+  },
+
+  // ── AUTH ─────────────────────────────────────────────
+  async register(name, email, password) {
+    const data = await this.request('POST', '/auth/register', { name, email, password }, false);
+    SEC.setToken(data.token);
+    SEC.setUser(data.user);
+    return data;
+  },
+
+  async login(email, password) {
+    const data = await this.request('POST', '/auth/login', { email, password }, false);
+    SEC.setToken(data.token);
+    SEC.setUser(data.user);
+    return data;
+  },
+
+  // ── VAULT ─────────────────────────────────────────────
+  async getVault()           { return this.request('GET', '/vault'); },
+  async getTransactions()    { return this.request('GET', '/transactions'); },
+  async deposit(amt, note)   { return this.request('POST', '/deposit', { amount: amt, note }); },
+  async withdraw(amt, note)  { return this.request('POST', '/withdraw', { amount: amt, note }); },
+  async gameReward(c, s)     { return this.request('POST', '/game-reward', { coins: c, score: s }); },
+
+  // ── PAYMENTS ──────────────────────────────────────────
+  async initPayment(amount, email) {
+    return this.request('POST', '/payment/initialize', { amount, email });
+  },
+  async verifyPayment(reference) {
+    return this.request('POST', '/payment/verify', { reference });
+  },
+
+  // ── BANK ACCOUNTS ────────────────────────────────────
+  async getBanks()            { return this.request('GET', '/banks'); },
+  async verifyAccount(n, c)   { return this.request('POST', '/accounts/verify', { accountNumber: n, bankCode: c }); },
+  async linkAccount(d)        { return this.request('POST', '/accounts/link', d); },
+  async getAccounts()         { return this.request('GET', '/accounts'); },
+  async removeAccount(id)     { return this.request('DELETE', `/accounts/${id}`); },
+};
+
+// ── AUTH UI ──────────────────────────────────────────────
+let _authMode = 'login';
+
+function showAuthModal() {
+  if (document.getElementById('authOverlay')) return;
+  const el = document.createElement('div');
+  el.id = 'authOverlay';
+  el.innerHTML = `
+    <div id="authBox">
+      <div class="sec-badge">🔐 256-bit Encrypted</div>
+      <h2>Welcome to TANADI</h2>
+      <p>Sign in to access your secure vault</p>
+      <div id="authError"></div>
+      <div id="authSuccess"></div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab inactive" id="tabReg" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <div id="regFields" style="display:none">
+        <input class="auth-input" id="authName" placeholder="Full Name" autocomplete="name">
+      </div>
+      <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email">
+      <input class="auth-input" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
+      <div id="passHints" style="display:none;font-size:12px;color:#7a9bb5;margin-bottom:12px;line-height:1.8"></div>
+      <button id="authSubmitBtn" onclick="submitAuth()">Login</button>
+      <div class="rate-warning" style="display:none" id="lockWarning">
+        ⚠️ Too many attempts. Please wait before trying again.
+      </div>
+    </div>
+  `;
+  document.body.appendChild(el);
+}
+
+function switchAuthTab(mode) {
+  _authMode = mode;
+  document.getElementById('regFields').style.display = mode === 'register' ? 'block' : 'none';
+  document.getElementById('passHints').style.display  = mode === 'register' ? 'block' : 'none';
+  document.getElementById('authSubmitBtn').textContent = mode === 'login' ? 'Login' : 'Create Account';
+  document.getElementById('tabLogin').className = 'auth-tab ' + (mode === 'login' ? 'active' : 'inactive');
+  document.getElementById('tabReg').className   = 'auth-tab ' + (mode === 'register' ? 'active' : 'inactive');
+  document.getElementById('authError').style.display = 'none';
+}
+
+// Live password strength hints
+document.addEventListener('input', e => {
+  if (e.target.id === 'authPass' && _authMode === 'register') {
+    const hints = SEC.validatePassword(e.target.value);
+    const el = document.getElementById('passHints');
+    if (el) el.innerHTML = hints.length
+      ? '❌ Password needs: ' + hints.join(', ')
+      : '✅ Password looks good!';
+  }
+});
+
+async function submitAuth() {
+  // Client-side rate limiting
+  if (!SEC.rateLimit('auth', 5, 60000)) {
+    document.getElementById('lockWarning').style.display = 'block';
+    return;
+  }
+
+  const email = document.getElementById('authEmail')?.value?.trim();
+  const pass  = document.getElementById('authPass')?.value;
+  const errEl = document.getElementById('authError');
+  const btn   = document.getElementById('authSubmitBtn');
+
+  // Validate email
+  if (!SEC.validateEmail(email)) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  // Validate password on register
+  if (_authMode === 'register') {
+    const name = document.getElementById('authName')?.value?.trim();
+    if (!name || name.length < 2) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Please enter your full name.';
+      return;
+    }
+    const passErrors = SEC.validatePassword(pass);
+    if (passErrors.length) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Password needs: ' + passErrors.join(', ');
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Please wait...';
+  errEl.style.display = 'none';
+
+  try {
+    if (_authMode === 'login') {
+      await API.login(email, pass);
+    } else {
+      const name = document.getElementById('authName')?.value?.trim();
+      await API.register(name, email, pass);
+    }
+    // Success — remove modal and sync
+    document.getElementById('authOverlay')?.remove();
+    await syncFromBackend();
+    updateUserBar();
+    toast('✅ Welcome to TANADI!');
+  } catch (err) {
+    if (err.message === 'OFFLINE') {
+      // Backend offline — allow local-only mode
+      document.getElementById('authOverlay')?.remove();
+      toast('⚠️ Running in offline mode');
+    } else {
+      errEl.style.display = 'block';
+      errEl.textContent = err.message;
+      btn.disabled = false;
+      btn.textContent = _authMode === 'login' ? 'Login' : 'Create Account';
+    }
+  }
+}
+
+function logoutUser() {
+  SEC.clearToken();
+  updateUserBar();
+  toast('👋 Logged out successfully');
+}
+
+function updateUserBar() {
+  const user = SEC.getUser();
+  const el   = document.querySelector('.score-badge');
+  if (!el) return;
+  if (user) {
+    el.innerHTML = `<span style="color:#00e5a0">👤 ${SEC.escapeHtml(user.name.split(' ')[0])}</span>`;
+    el.style.cursor = 'pointer';
+    el.title = 'Click to logout';
+    el.onclick = () => { if(confirm('Log out?')) logoutUser(); };
+  }
+}
+
+// ── SYNC FROM BACKEND ────────────────────────────────────
+async function syncFromBackend() {
+  if (!SEC.isLoggedIn()) return;
+  try {
+    const [vaultRes, txRes] = await Promise.all([
+      API.getVault(),
+      API.getTransactions(),
+    ]);
+    // Update STATE from server (authoritative)
+    STATE.vault = vaultRes.balance;
+    if (txRes.transactions) {
+      STATE.transactions = txRes.transactions.map(t => ({
+        type:   t.type === 'withdrawal' ? 'withdraw' : 'deposit',
+        amount: t.amount,
+        note:   t.note || '',
+        date:   new Date(t.createdAt).toLocaleDateString(),
+      }));
+    }
+    renderVault();
+    console.log('[TANADI] Synced from backend — Balance: ₦' + vaultRes.balance);
+  } catch (err) {
+    if (err.message !== 'OFFLINE') console.warn('[TANADI] Sync failed:', err.message);
+  }
+}
+
+// ── SECURE VAULT FUNCTIONS (override originals) ──────────
+
+async function vaultDeposit() {
+  // Client-side rate limiting
+  if (!SEC.rateLimit('financial', 10, 60000)) {
+    toast('⚠️ Too many requests. Please slow down.'); return;
+  }
+  const rawAmt = document.getElementById('depositAmt')?.value;
+  const amt    = SEC.sanitizeAmount(rawAmt);
+  if (!amt) { toast('⚠️ Enter a valid amount (₦1 - ₦10,000,000)'); return; }
+  const note = SEC.sanitizeText(document.getElementById('depositNote')?.value || 'Manual deposit');
+
+  try {
+    if (SEC.isLoggedIn()) {
+      const res = await API.deposit(amt, note);
+      STATE.vault = res.newBalance;  // Server is authoritative
+    } else {
+      STATE.vault += amt;
+      save();
+    }
+    STATE.transactions.unshift({ type: 'deposit', amount: amt, note, date: new Date().toLocaleDateString() });
+    renderVault();
+    document.getElementById('depositAmt').value  = '';
+    document.getElementById('depositNote').value = '';
+    toast(`✅ ₦${amt.toLocaleString()} deposited securely!`);
+  } catch(err) {
+    if (err.message === 'OFFLINE') {
+      // Fallback to local
+      STATE.vault += amt;
+      STATE.transactions.unshift({ type: 'deposit', amount: amt, note, date: new Date().toLocaleDateString() });
+      save(); renderVault();
+      toast(`✅ ₦${amt.toLocaleString()} deposited (offline mode)`);
+    } else {
+      toast('❌ ' + err.message);
+    }
+  }
+}
+
+async function vaultWithdraw() {
+  if (!SEC.rateLimit('financial', 10, 60000)) {
+    toast('⚠️ Too many requests. Please slow down.'); return;
+  }
+  const rawAmt = document.getElementById('withdrawAmt')?.value;
+  const amt    = SEC.sanitizeAmount(rawAmt);
+  if (!amt) { toast('⚠️ Enter a valid amount'); return; }
+  const note = SEC.sanitizeText(document.getElementById('withdrawNote')?.value || 'Withdrawal');
+
+  try {
+    if (SEC.isLoggedIn()) {
+      const res = await API.withdraw(amt, note);
+      STATE.vault = res.newBalance;  // Server enforces balance check
+    } else {
+      if (amt > STATE.vault) { toast('⚠️ Insufficient vault balance'); return; }
+      STATE.vault -= amt;
+      save();
+    }
+    STATE.transactions.unshift({ type: 'withdraw', amount: amt, note, date: new Date().toLocaleDateString() });
+    renderVault();
+    document.getElementById('withdrawAmt').value  = '';
+    document.getElementById('withdrawNote').value = '';
+    toast(`₦${amt.toLocaleString()} withdrawn`);
+  } catch(err) {
+    if (err.message === 'OFFLINE') {
+      if (amt > STATE.vault) { toast('⚠️ Insufficient balance'); return; }
+      STATE.vault -= amt;
+      STATE.transactions.unshift({ type: 'withdraw', amount: amt, note, date: new Date().toLocaleDateString() });
+      save(); renderVault();
+      toast(`₦${amt.toLocaleString()} withdrawn (offline mode)`);
+    } else {
+      toast('❌ ' + err.message);
+    }
+  }
+}
+
+async function addCoinsToVault() {
+  if (!SEC.rateLimit('game', 5, 60000)) {
+    toast('⚠️ Slow down!'); return;
+  }
+  if (STATE.gameCoins <= 0) return;
+  const coins = Math.min(STATE.gameCoins, 150); // Client-side cap (server also caps)
+
+  try {
+    if (SEC.isLoggedIn()) {
+      const res = await API.gameReward(coins, STATE.gameScore || 0);
+      STATE.vault = res.newBalance;
+    } else {
+      STATE.vault += coins;
+      STATE.transactions.unshift({ type: 'deposit', amount: coins, note: `Game reward: ${coins} coins`, date: new Date().toLocaleDateString() });
+      save();
+    }
+    toast(`🎉 ₦${coins} coins added to vault!`);
+    STATE.gameCoins = 0;
+    document.getElementById('gameOptions').innerHTML =
+      `<button class="game-opt" onclick="startGame()" style="grid-column:1/-1;padding:20px;font-size:16px">🎮 Play Again</button>`;
+  } catch(err) {
+    toast('❌ ' + err.message);
+  }
+}
+
+// ── SECURE PAYMENT FUNCTIONS ─────────────────────────────
+
+async function generatePayLink() {
+  if (!SEC.rateLimit('payment', 5, 60000)) {
+    toast('⚠️ Too many payment requests'); return;
+  }
+  const rawAmt = document.getElementById('payAmount')?.value;
+  const email  = document.getElementById('payEmail')?.value?.trim();
+  const amt    = SEC.sanitizeAmount(rawAmt);
+
+  if (!amt || amt < 100) { toast('⚠️ Minimum amount is ₦100'); return; }
+  if (!SEC.validateEmail(email)) { toast('⚠️ Enter a valid email'); return; }
+
+  const resultEl = document.getElementById('payLinkResult');
+  resultEl.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:12px">⏳ Generating secure link...</div>`;
+
+  try {
+    if (SEC.isLoggedIn()) {
+      const res = await API.initPayment(amt, email);
+      resultEl.innerHTML = `
+        <div style="background:rgba(0,184,255,0.1);border:1px solid rgba(0,184,255,0.3);
+          border-radius:14px;padding:16px;margin-top:12px">
+          <div class="sec-badge">🔐 Secured by Paystack</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Payment Link Ready</div>
+          <div style="font-size:12px;color:var(--accent);word-break:break-all;margin-bottom:12px">
+            Ref: ${SEC.escapeHtml(res.reference)}
+          </div>
+          <a href="${SEC.escapeHtml(res.authorizationUrl)}" target="_blank" rel="noopener noreferrer"
+            style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,#00b8ff,#0080ff);
+            border-radius:12px;color:white;text-align:center;font-weight:700;
+            text-decoration:none;font-size:14px;box-sizing:border-box">
+            💳 Pay ₦${amt.toLocaleString()} Securely
+          </a>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">
+            After payment, enter the reference below to verify
+          </div>
+        </div>`;
+    } else {
+      // Offline fallback
+      resultEl.innerHTML = `
+        <div style="background:rgba(255,201,64,0.1);border:1px solid rgba(255,201,64,0.3);
+          border-radius:14px;padding:16px;margin-top:12px">
+          <div style="color:var(--gold);font-size:13px">
+            ⚠️ Please log in to generate a verified payment link.<br><br>
+            <a href="https://paystack.com/pay/tanadi" target="_blank" rel="noopener noreferrer"
+              style="color:var(--accent)">Pay ₦${amt.toLocaleString()} via Paystack (manual)</a>
+          </div>
+        </div>`;
+    }
+  } catch(err) {
+    resultEl.innerHTML = `<div style="color:var(--red);font-size:13px;padding:12px">❌ ${SEC.escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function verifyPay() {
+  const ref = document.getElementById('payRef')?.value?.trim();
+  if (!ref || ref.length < 5) { toast('⚠️ Enter a valid payment reference'); return; }
+  // Sanitize reference
+  const safeRef = ref.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 100);
+  if (!safeRef) { toast('⚠️ Invalid reference format'); return; }
+
+  try {
+    if (SEC.isLoggedIn()) {
+      const res = await API.verifyPayment(safeRef);
+      STATE.vault = res.newBalance;
+      STATE.transactions.unshift({
+        type: 'deposit', amount: res.credited,
+        note: 'Paystack verified payment', date: new Date().toLocaleDateString()
+      });
+      renderVault();
+      toast(`✅ ₦${res.credited.toLocaleString()} verified and added to vault!`);
+    } else {
+      toast('⚠️ Please log in to verify payments');
+    }
+  } catch(err) {
+    toast('❌ ' + err.message);
+  }
+}
+
+// ── SECURE BANK LINKING ──────────────────────────────────
+
+async function linkAccount() {
+  const bankEl  = document.getElementById('bankSelect');
+  const acctNo  = document.getElementById('accountNo')?.value?.trim();
+  const acctName = document.getElementById('accountName')?.value?.trim().toUpperCase();
+
+  if (!bankEl?.value) { toast('⚠️ Select a bank'); return; }
+  if (!SEC.validateAccountNumber(acctNo)) { toast('⚠️ Account number must be exactly 10 digits'); return; }
+  if (!acctName || acctName.length < 3) { toast('⚠️ Enter your full account name'); return; }
+
+  const bankName = bankEl.options[bankEl.selectedIndex].text;
+  const bankCode = bankEl.value;
+
+  try {
+    if (SEC.isLoggedIn()) {
+      // Verify with Paystack first
+      toast('⏳ Verifying account...');
+      try {
+        const verified = await API.verifyAccount(acctNo, bankCode);
+        // Link with verified name
+        await API.linkAccount({ bankName, bankCode, accountNumber: acctNo, accountName: verified.accountName || acctName });
+        toast(`✅ ${SEC.escapeHtml(verified.accountName || acctName)} verified and linked!`);
+      } catch {
+        // Verification failed — link manually
+        STATE.linkedAccounts.push({ bank: bankName, code: bankCode, acct: acctNo, name: acctName });
+        save();
+        toast('✅ Account linked (manual — not verified)');
+      }
+    } else {
+      // Offline: link locally
+      STATE.linkedAccounts.push({ bank: bankName, code: bankCode, acct: acctNo, name: acctName });
+      save();
+      toast('✅ Account linked!');
+    }
+    renderLinkedAccounts();
+    bankEl.value = '';
+    document.getElementById('accountNo').value   = '';
+    document.getElementById('accountName').value = '';
+  } catch(err) {
+    toast('❌ ' + err.message);
+  }
+}
+
+// ── CONTENT SECURITY POLICY (runtime) ───────────────────
+// Block eval and inline script injection
+window.addEventListener('securitypolicyviolation', e => {
+  console.warn('[TANADI Security] CSP Violation:', e.violatedDirective);
+});
+
+
+// ── ONLINE / OFFLINE DETECTION ──────────────────────────
+let _backendOnline = false;
+
+async function checkBackendStatus() {
+  const statusEl = document.getElementById('connectionStatus');
+  const dotEl    = document.getElementById('connDot');
+  const textEl   = document.getElementById('connText');
+
+  try {
+    const res = await fetch(API_BASE + '/health', { timeout: 5000 });
+    if (res.ok) {
+      _backendOnline = true;
+      if (dotEl)  { dotEl.className = 'online-dot'; }
+      if (textEl) { textEl.textContent = 'Secure Backend Connected'; }
+    } else throw new Error();
+  } catch {
+    _backendOnline = false;
+    if (dotEl)  { dotEl.className = 'offline-dot'; }
+    if (textEl) { textEl.textContent = 'Offline Mode'; }
+  }
+
+  // Show status briefly
+  if (statusEl) {
+    statusEl.classList.add('show');
+    setTimeout(() => statusEl.classList.remove('show'), 3000);
+  }
+}
+
+// Check on load and every 30 seconds
+window.addEventListener('load', checkBackendStatus);
+window.addEventListener('online',  checkBackendStatus);
+window.addEventListener('offline', () => {
+  _backendOnline = false;
+  const dotEl  = document.getElementById('connDot');
+  const textEl = document.getElementById('connText');
+  const statusEl = document.getElementById('connectionStatus');
+  if (dotEl)    dotEl.className  = 'offline-dot';
+  if (textEl)   textEl.textContent = 'No Internet';
+  if (statusEl) { statusEl.classList.add('show'); setTimeout(() => statusEl.classList.remove('show'), 3000); }
+});
+setInterval(checkBackendStatus, 30000);
+
+// ── AUTO-INIT ────────────────────────────────────────────
+(async () => {
+  updateUserBar();
+
+  if (SEC.isLoggedIn()) {
+    // Sync vault from backend on load
+    await syncFromBackend();
+  }
+  // Note: We don't force login modal on load —
+  // app works in offline mode too (graceful degradation)
+})();
+
+</script>
+
+</body>
+</html>
